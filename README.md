@@ -228,6 +228,7 @@ npm test
 - **Progress Tracking**: Track completion status of individual lessons
 - **Responsive Design**: Works seamlessly across devices
 - **Secure Authentication**: JWT tokens in httpOnly cookies
+- **Simulated Payment System**: Fake payment flow simulation for course purchases (demonstrates payment logic without external dependencies)
 
 ## Security Considerations
 
@@ -248,7 +249,7 @@ npm test
 
 ## Future Enhancements
 
-- Payment integration for paid courses
+- Real payment gateway integration (Stripe/Razorpay)
 - Video streaming capabilities
 - Advanced analytics dashboard
 - Course recommendation system

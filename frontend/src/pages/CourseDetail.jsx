@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Reviews from '../components/Reviews';
+import SimulatedPaymentForm from '../components/PaymentForm';
 
 function CourseDetail() {
   const { id } = useParams();
@@ -11,6 +12,7 @@ function CourseDetail() {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolled, setEnrolled] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,6 +135,28 @@ function CourseDetail() {
                   >
                     Enrolled
                   </button>
+                </div>
+              ) : course && course.price > 0 ? (
+                <div>
+                  {showPayment ? (
+                    <SimulatedPaymentForm
+                      courseId={id}
+                      coursePrice={course.price}
+                      onPaymentSuccess={() => {
+                        setShowPayment(false);
+                        setEnrolled(true);
+                        alert('Payment successful! You are now enrolled in the course.');
+                      }}
+                      onCancel={() => setShowPayment(false)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setShowPayment(true)}
+                      className="bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 transition"
+                    >
+                      Pay ₹{course.price} (Simulated)
+                    </button>
+                  )}
                 </div>
               ) : (
                 <button
