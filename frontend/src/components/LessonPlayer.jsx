@@ -49,13 +49,14 @@ const LessonPlayer = ({ course, initialLessonIndex = 0 }) => {
       <div className="mb-6">
         {currentLesson.videoUrl ? (
           <div className="aspect-video bg-black rounded-md overflow-hidden">
-            <video 
-              src={currentLesson.videoUrl} 
-              controls 
+            <iframe
+              src={currentLesson.videoUrl}
               className="w-full h-full"
-            >
-              Your browser does not support the video tag.
-            </video>
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title={currentLesson.title}
+            ></iframe>
           </div>
         ) : (
           <div className="bg-gray-100 p-8 rounded-md text-center">

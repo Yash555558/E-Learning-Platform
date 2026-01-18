@@ -86,7 +86,7 @@ function CourseDetail() {
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-3xl font-bold text-gray-800">{course.title}</h1>
             <span className="bg-blue-100 text-blue-800 text-xl font-bold px-4 py-2 rounded">
-              ${course.price}
+              ₹{course.price}
             </span>
           </div>
           

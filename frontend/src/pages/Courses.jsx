@@ -139,7 +139,7 @@ function Courses() {
                 <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
                 <div className="flex justify-between items-center mb-4">
                   <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                    ${course.price}
+                    ₹{course.price}
                   </span>
                   <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm capitalize">
                     {course.difficulty}

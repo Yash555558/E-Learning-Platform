@@ -116,6 +116,29 @@ const AdminPanel = () => {
     setLessons(newLessons);
   };
 
+  const isValidYouTubeUrl = (url) => {
+    if (!url) return false;
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+    return youtubeRegex.test(url);
+  };
+
+  const getYoutubeEmbedUrl = (url) => {
+    if (!url) return '';
+    
+    // Extract video ID from various YouTube URL formats
+    let videoId = '';
+    
+    if (url.includes('youtube.com/watch?v=')) {
+      videoId = url.split('v=')[1]?.split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    } else if (url.includes('youtube.com/embed/')) {
+      videoId = url.split('embed/')[1]?.split('?')[0];
+    }
+    
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  };
+
   const addLesson = () => {
     setLessons([...lessons, { 
       title: '', 
@@ -133,6 +156,16 @@ const AdminPanel = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate that all lessons have YouTube URLs
+    const invalidLessons = lessons.filter(lesson => 
+      !lesson.videoUrl || !isValidYouTubeUrl(lesson.videoUrl)
+    );
+    
+    if (invalidLessons.length > 0) {
+      alert(`Please provide valid YouTube URLs for all lessons. ${invalidLessons.length} lesson(s) are missing valid video URLs.`);
+      return;
+    }
+    
     try {
       // Upload thumbnail if a new file is selected
       let uploadedThumbnailUrl = formData.thumbnailUrl;
@@ -143,10 +176,16 @@ const AdminPanel = () => {
         }
       }
       
+      // Convert YouTube URLs to embed URLs before sending to backend
+      const processedLessons = lessons.map(lesson => ({
+        ...lesson,
+        videoUrl: getYoutubeEmbedUrl(lesson.videoUrl)
+      }));
+      
       const courseData = {
         ...formData,
-        thumbnailUrl: uploadedThumbnailUrl, // Use the uploaded URL
-        lessons
+        thumbnailUrl: uploadedThumbnailUrl,
+        lessons: processedLessons
       };
 
       let response;
@@ -474,13 +513,37 @@ const AdminPanel = () => {
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium mb-1">Video URL</label>
+                          <label className="block text-sm font-medium mb-1">Video URL *</label>
                           <input
                             type="text"
                             value={lesson.videoUrl}
                             onChange={(e) => handleLessonChange(index, 'videoUrl', e.target.value)}
-                            className="w-full p-2 border rounded-md"
+                            className={`w-full p-2 border rounded-md ${
+                              lesson.videoUrl && !isValidYouTubeUrl(lesson.videoUrl) 
+                                ? 'border-red-500' 
+                                : 'border-gray-300'
+                            }`}
+                            placeholder="Enter YouTube URL (mandatory)"
+                            required
                           />
+                          {lesson.videoUrl && !isValidYouTubeUrl(lesson.videoUrl) && (
+                            <p className="text-red-500 text-sm mt-1">Please enter a valid YouTube URL</p>
+                          )}
+                          {lesson.videoUrl && isValidYouTubeUrl(lesson.videoUrl) && (
+                            <div className="mt-2">
+                              <p className="text-sm text-green-600">✓ Valid YouTube URL</p>
+                              <div className="mt-2 aspect-video bg-gray-100 rounded-md overflow-hidden">
+                                <iframe
+                                  src={getYoutubeEmbedUrl(lesson.videoUrl)}
+                                  className="w-full h-full"
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  title="YouTube Preview"
+                                ></iframe>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -529,7 +592,7 @@ const AdminPanel = () => {
                     <div>
                       <h3 className="font-semibold">{course.title}</h3>
                       <p className="text-sm text-gray-600">{course.category} • {course.difficulty}</p>
-                      <p className="text-sm">${course.price}</p>
+                      <p className="text-sm">₹{course.price}</p>
                     </div>
                     <div className="flex space-x-2">
                       <button
