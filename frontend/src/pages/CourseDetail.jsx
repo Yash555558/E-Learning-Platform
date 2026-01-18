@@ -134,6 +134,28 @@ function CourseDetail() {
                     Enrolled
                   </button>
                 </div>
+              ) : course && course.price > 0 ? (
+                <div>
+                  {showPayment ? (
+                    <PaymentForm
+                      courseId={id}
+                      coursePrice={course.price}
+                      onPaymentSuccess={() => {
+                        setShowPayment(false);
+                        setEnrolled(true);
+                        alert('Payment successful! You are now enrolled in the course.');
+                      }}
+                      onCancel={() => setShowPayment(false)}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => setShowPayment(true)}
+                      className="bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 transition"
+                    >
+                      Buy Now - ₹{course.price}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={handleEnroll}
