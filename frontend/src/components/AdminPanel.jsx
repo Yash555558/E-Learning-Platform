@@ -416,13 +416,19 @@ const AdminPanel = () => {
                   
                   <div>
                     <label className="block text-sm font-medium mb-1">Category</label>
-                    <input
-                      type="text"
+                    <select
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded-md"
-                    />
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Development">Development</option>
+                      <option value="Design">Design</option>
+                      <option value="Business">Business</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Coding">Coding</option>
+                    </select>
                   </div>
                 </div>
                 

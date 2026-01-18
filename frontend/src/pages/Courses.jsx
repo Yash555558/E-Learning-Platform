@@ -95,6 +95,7 @@ function Courses() {
               <option value="Design">Design</option>
               <option value="Business">Business</option>
               <option value="Marketing">Marketing</option>
+              <option value="Coding">Coding</option>
             </select>
           </div>
           
