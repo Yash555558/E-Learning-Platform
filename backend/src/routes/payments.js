@@ -1,18 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const { requireAuth } = require('../middleware/auth');
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-// Create a payment order for a course
+// Create a simulated payment order for a course
 router.post('/create-order', requireAuth, async (req, res, next) => {
   try {
     const { courseId } = req.body;
@@ -23,71 +15,61 @@ router.post('/create-order', requireAuth, async (req, res, next) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Ensure price is in paise (Razorpay expects amount in smallest currency unit)
+    // Ensure price is in paise (for INR)
     const amount = Math.round(course.price * 100); // Convert to paise for INR
     
     if (amount <= 0) {
       return res.status(400).json({ message: 'Course is free or invalid price' });
     }
 
-    // Create order with Razorpay
-    const options = {
+    // Return order details for simulation
+    res.json({
+      orderId: `sim_${Date.now()}_${courseId}`,
       amount: amount,
       currency: 'INR',
-      receipt: `course_${courseId}_user_${req.user._id}`,
-    };
-
-    const order = await razorpay.orders.create(options);
-
-    res.json({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
       courseId: courseId,
-      courseTitle: course.title
+      courseTitle: course.title,
+      simulated: true
     });
   } catch (err) {
-    console.error('Error creating Razorpay order:', err);
+    console.error('Error creating simulated order:', err);
     next(err);
   }
 });
 
-// Verify payment and create enrollment
-router.post('/verify-payment', requireAuth, async (req, res) => {
+// Simulate payment and create enrollment
+router.post('/simulate-payment', requireAuth, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, courseId } = req.body;
+    const { orderId, courseId } = req.body;
 
-    // Create the signature verification string
-    const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-      .update(body.toString())
-      .digest('hex');
+    // Simulate payment processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Verify the signature
-    if (expectedSignature === razorpay_signature) {
-      // Signature matched, payment verified
-      // Check if enrollment already exists
-      const existingEnrollment = await Enrollment.findOne({ 
-        userId: req.user._id, 
-        courseId: courseId 
+    // Check if enrollment already exists
+    const existingEnrollment = await Enrollment.findOne({ 
+      userId: req.user._id, 
+      courseId: courseId 
+    });
+    
+    if (!existingEnrollment) {
+      await Enrollment.create({
+        userId: req.user._id,
+        courseId: courseId,
+        progress: new Map(),
+        paymentStatus: 'completed',
+        paymentId: orderId,
+        paymentDate: new Date()
       });
-      
-      if (!existingEnrollment) {
-        await Enrollment.create({
-          userId: req.user._id,
-          courseId: courseId,
-          progress: new Map()
-        });
-      }
-
-      res.json({ success: true, message: 'Payment verified and enrollment created successfully!' });
-    } else {
-      res.status(400).json({ success: false, message: 'Payment verification failed' });
     }
+
+    res.json({ 
+      success: true, 
+      message: 'Payment simulated successfully and enrollment created!',
+      orderId: orderId
+    });
   } catch (error) {
-    console.error('Error verifying payment:', error);
-    res.status(500).json({ success: false, message: 'Error verifying payment' });
+    console.error('Error simulating payment:', error);
+    res.status(500).json({ success: false, message: 'Error processing simulated payment' });
   }
 });
 

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Reviews from '../components/Reviews';
-import RazorpayPaymentForm from '../components/PaymentForm';
+import SimulatedPaymentForm from '../components/PaymentForm';
 
 function CourseDetail() {
   const { id } = useParams();
@@ -139,7 +139,7 @@ function CourseDetail() {
               ) : course && course.price > 0 ? (
                 <div>
                   {showPayment ? (
-                    <RazorpayPaymentForm
+                    <SimulatedPaymentForm
                       courseId={id}
                       coursePrice={course.price}
                       onPaymentSuccess={() => {

@@ -1,20 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-const RazorpayPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
+const SimulatedPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // Load Razorpay script dynamically
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-    
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
   const handlePayment = async () => {
     setLoading(true);
@@ -38,56 +26,26 @@ const RazorpayPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel
 
       const orderData = await response.json();
 
-      // Configure Razorpay options
-      const options = {
-        key: process.env.VITE_RAZORPAY_KEY_ID,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'E-Learning Platform',
-        description: `Payment for course: ${orderData.courseTitle}`,
-        order_id: orderData.orderId,
-        handler: async function (response) {
-          try {
-            // Verify payment on the backend
-            const verifyResponse = await fetch('/api/payments/verify-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'credentials': 'include'
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                courseId: courseId
-              })
-            });
-
-            const verifyResult = await verifyResponse.json();
-
-            if (verifyResult.success) {
-              onPaymentSuccess();
-            } else {
-              setError(verifyResult.message || 'Payment verification failed');
-            }
-          } catch (err) {
-            setError(err.message);
-          }
+      // Simulate payment processing
+      const paymentResponse = await fetch('/api/payments/simulate-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'credentials': 'include'
         },
-        prefill: {
-          name: '', // Would come from user context in real app
-          email: '', // Would come from user context in real app
-          contact: '', // Would come from user context in real app
-        },
-        theme: {
-          color: '#3b82f6',
-        },
-      };
+        body: JSON.stringify({
+          orderId: orderData.orderId,
+          courseId: courseId
+        })
+      });
 
-      // Open Razorpay payment modal
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const paymentResult = await paymentResponse.json();
 
+      if (paymentResult.success) {
+        onPaymentSuccess();
+      } else {
+        setError(paymentResult.message || 'Payment simulation failed');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -97,7 +55,9 @@ const RazorpayPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h3 className="text-xl font-bold mb-4">Pay ₹{coursePrice}</h3>
+      <h3 className="text-xl font-bold mb-4">Simulate Payment</h3>
+      <p className="text-gray-600 mb-4">Course: ₹{coursePrice}</p>
+      <p className="text-sm text-gray-500 mb-4">This is a simulated payment flow for demonstration purposes.</p>
       
       {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
       
@@ -112,7 +72,7 @@ const RazorpayPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel
               : 'hover:bg-green-700'
           }`}
         >
-          {loading ? 'Processing...' : `Pay ₹${coursePrice}`}
+          {loading ? 'Processing...' : `Pay ₹${coursePrice} (Simulated)`}
         </button>
         <button
           type="button"
@@ -126,4 +86,4 @@ const RazorpayPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel
   );
 };
 
-export default RazorpayPaymentForm;
+export default SimulatedPaymentForm;
