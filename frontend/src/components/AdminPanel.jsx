@@ -125,6 +125,11 @@ const AdminPanel = () => {
   const getYoutubeEmbedUrl = (url) => {
     if (!url) return '';
     
+    // Handle already embedded URLs
+    if (url.includes('youtube.com/embed/')) {
+      return url;
+    }
+    
     // Extract video ID from various YouTube URL formats
     let videoId = '';
     
@@ -132,8 +137,6 @@ const AdminPanel = () => {
       videoId = url.split('v=')[1]?.split('&')[0];
     } else if (url.includes('youtu.be/')) {
       videoId = url.split('youtu.be/')[1]?.split('?')[0];
-    } else if (url.includes('youtube.com/embed/')) {
-      videoId = url.split('embed/')[1]?.split('?')[0];
     }
     
     return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
@@ -534,12 +537,13 @@ const AdminPanel = () => {
                               <p className="text-sm text-green-600">✓ Valid YouTube URL</p>
                               <div className="mt-2 aspect-video bg-gray-100 rounded-md overflow-hidden">
                                 <iframe
-                                  src={getYoutubeEmbedUrl(lesson.videoUrl)}
+                                  src={`${getYoutubeEmbedUrl(lesson.videoUrl)}?autoplay=0&modestbranding=1&rel=0`}
                                   className="w-full h-full"
                                   frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                   allowFullScreen
                                   title="YouTube Preview"
+                                  sandbox="allow-scripts allow-same-origin allow-popups"
                                 ></iframe>
                               </div>
                             </div>

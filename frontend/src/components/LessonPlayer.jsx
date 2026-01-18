@@ -50,12 +50,13 @@ const LessonPlayer = ({ course, initialLessonIndex = 0 }) => {
         {currentLesson.videoUrl ? (
           <div className="aspect-video bg-black rounded-md overflow-hidden">
             <iframe
-              src={currentLesson.videoUrl}
+              src={`${currentLesson.videoUrl}?autoplay=0&modestbranding=1&rel=0`}
               className="w-full h-full"
               frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
               title={currentLesson.title}
+              sandbox="allow-scripts allow-same-origin allow-popups"
             ></iframe>
           </div>
         ) : (
