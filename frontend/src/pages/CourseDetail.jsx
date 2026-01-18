@@ -154,7 +154,11 @@ function CourseDetail() {
                       onClick={() => setShowPayment(true)}
                       className="bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 transition"
                     >
+<<<<<<< HEAD
                       Pay ₹{course.price} (Simulated)
+=======
+                      Buy Now - ₹{course.price}
+>>>>>>> 46e5ed5cbc2b14593eabc02bb6bc0a4cecee530c
                     </button>
                   )}
                 </div>
