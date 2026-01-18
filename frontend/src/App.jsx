@@ -12,6 +12,7 @@ import Signup from './pages/Signup';
 import Admin from './pages/Admin';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import CourseContent from './pages/CourseContent';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -43,6 +44,11 @@ function AppContent() {
             <AdminRoute>
               <Admin />
             </AdminRoute>
+          } />
+          <Route path="/course-content/:courseId" element={
+            <PrivateRoute>
+              <CourseContent />
+            </PrivateRoute>
           } />
         </Routes>
       </main>

@@ -1,30 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Reviews from '../components/Reviews';
 
 function CourseDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolled, setEnrolled] = useState(false);
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/courses/${id}`);
-        setCourse(response.data.course);
+        // Fetch course details
+        const courseResponse = await axios.get(`/api/courses/${id}`);
+        setCourse(courseResponse.data.course);
+        
+        // Check if user is enrolled in this course
+        if (user) {
+          const enrollmentResponse = await axios.get('/api/enrollments/me', {
+            withCredentials: true
+          });
+          const userEnrollments = enrollmentResponse.data.enrollments;
+          const isEnrolled = userEnrollments.some(enrollment => 
+            enrollment.courseId._id === id
+          );
+          setEnrolled(isEnrolled);
+        }
       } catch (error) {
-        console.error('Error fetching course:', error);
+        console.error('Error fetching course or enrollment:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourse();
-  }, [id]);
+    fetchData();
+  }, [id, user]);
 
   const handleEnroll = async () => {
     try {
@@ -104,17 +118,30 @@ function CourseDetail() {
           
           <div>
             {user ? (
-              <button
-                onClick={handleEnroll}
-                disabled={enrolled}
-                className={`${
-                  enrolled 
-                    ? 'bg-green-500 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700'
-                } text-white font-bold py-3 px-6 rounded-md transition`}
-              >
-                {enrolled ? 'Enrolled' : 'Enroll Now'}
-              </button>
+              enrolled ? (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => navigate(`/course-content/${id}`)}
+                    className="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition"
+                  >
+                    View Course Content
+                  </button>
+                  <button
+                    onClick={handleEnroll}
+                    disabled={true}
+                    className="bg-green-500 cursor-not-allowed text-white font-bold py-3 px-6 rounded-md transition"
+                  >
+                    Enrolled
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleEnroll}
+                  className="bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 transition"
+                >
+                  Enroll Now
+                </button>
+              )
             ) : (
               <div>
                 <p className="text-gray-600 mb-4">Log in to enroll in this course</p>
