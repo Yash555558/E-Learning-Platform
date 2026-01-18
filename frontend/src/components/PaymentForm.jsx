@@ -1,44 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
-const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
-  const stripe = useStripe();
-  const elements = useElements();
+const RazorpayPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [processing, setProcessing] = useState(false);
-  const [disabled, setDisabled] = useState(true);
 
   useEffect(() => {
-    const cardElement = elements?.getElement(CardElement);
-    if (!cardElement) return;
-
-    const handleChange = (event) => {
-      setDisabled(event.empty);
-      setError(event.error ? event.error.message : '');
-    };
-
-    cardElement.on('change', handleChange);
-
+    // Load Razorpay script dynamically
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    
     return () => {
-      cardElement.off('change', handleChange);
+      document.body.removeChild(script);
     };
-  }, [elements]);
+  }, []);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setProcessing(true);
+  const handlePayment = async () => {
+    setLoading(true);
+    setError(null);
 
     try {
-      // Create payment intent on the backend
-      const response = await fetch('/api/payments/create-payment-intent', {
+      // Create order on the backend
+      const response = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,71 +33,86 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to create payment intent');
+        throw new Error(error.message || 'Failed to create order');
       }
 
-      const { clientSecret } = await response.json();
+      const orderData = await response.json();
 
-      // Confirm payment with Stripe
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-          billing_details: {
-            name: 'Customer', // Would come from user context in real app
-          },
+      // Configure Razorpay options
+      const options = {
+        key: process.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'E-Learning Platform',
+        description: `Payment for course: ${orderData.courseTitle}`,
+        order_id: orderData.orderId,
+        handler: async function (response) {
+          try {
+            // Verify payment on the backend
+            const verifyResponse = await fetch('/api/payments/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                courseId: courseId
+              })
+            });
+
+            const verifyResult = await verifyResponse.json();
+
+            if (verifyResult.success) {
+              onPaymentSuccess();
+            } else {
+              setError(verifyResult.message || 'Payment verification failed');
+            }
+          } catch (err) {
+            setError(err.message);
+          }
         },
-      });
+        prefill: {
+          name: '', // Would come from user context in real app
+          email: '', // Would come from user context in real app
+          contact: '', // Would come from user context in real app
+        },
+        theme: {
+          color: '#3b82f6',
+        },
+      };
 
-      if (result.error) {
-        setError(result.error.message);
-      } else if (result.paymentIntent.status === 'succeeded') {
-        onPaymentSuccess();
-      }
+      // Open Razorpay payment modal
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
     } catch (err) {
       setError(err.message);
     } finally {
-      setProcessing(false);
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-white rounded-lg shadow-md">
+    <div className="p-6 bg-white rounded-lg shadow-md">
       <h3 className="text-xl font-bold mb-4">Pay ₹{coursePrice}</h3>
       
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">Card Details</label>
-        <div className="border border-gray-300 rounded-md p-3">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
-                  },
-                },
-                invalid: {
-                  color: '#9e2146',
-                },
-              },
-            }}
-          />
-        </div>
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-      </div>
-
+      {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
+      
       <div className="flex space-x-3">
         <button
-          type="submit"
-          disabled={processing || disabled || !stripe}
+          type="button"
+          onClick={handlePayment}
+          disabled={loading}
           className={`flex-1 bg-green-600 text-white py-3 px-4 rounded-md ${
-            processing || disabled || !stripe
+            loading
               ? 'opacity-50 cursor-not-allowed'
               : 'hover:bg-green-700'
           }`}
         >
-          {processing ? 'Processing...' : `Pay ₹${coursePrice}`}
+          {loading ? 'Processing...' : `Pay ₹${coursePrice}`}
         </button>
         <button
           type="button"
@@ -123,21 +122,8 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
           Cancel
         </button>
       </div>
-    </form>
+    </div>
   );
 };
 
-const PaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
-  return (
-    <Elements stripe={stripePromise}>
-      <CheckoutForm 
-        courseId={courseId} 
-        coursePrice={coursePrice} 
-        onPaymentSuccess={onPaymentSuccess}
-        onCancel={onCancel}
-      />
-    </Elements>
-  );
-};
-
-export default PaymentForm;
+export default RazorpayPaymentForm;

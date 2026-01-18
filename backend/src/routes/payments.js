@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const { requireAuth } = require('../middleware/auth');
 
-// Create a payment intent for a course
-router.post('/create-payment-intent', requireAuth, async (req, res, next) => {
+// Initialize Razorpay instance
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// Create a payment order for a course
+router.post('/create-order', requireAuth, async (req, res, next) => {
   try {
     const { courseId } = req.body;
 
@@ -16,75 +23,72 @@ router.post('/create-payment-intent', requireAuth, async (req, res, next) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Ensure price is in cents (Stripe expects amount in smallest currency unit)
-    const amount = Math.round(course.price * 100); // Convert to paisa for INR
+    // Ensure price is in paise (Razorpay expects amount in smallest currency unit)
+    const amount = Math.round(course.price * 100); // Convert to paise for INR
     
     if (amount <= 0) {
       return res.status(400).json({ message: 'Course is free or invalid price' });
     }
 
-    // Create a PaymentIntent with the order amount and currency
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Create order with Razorpay
+    const options = {
       amount: amount,
-      currency: 'inr', // Using INR since we changed to ₹
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        userId: req.user._id.toString(),
-        courseId: courseId,
-        courseTitle: course.title
-      }
-    });
+      currency: 'INR',
+      receipt: `course_${courseId}_user_${req.user._id}`,
+    };
 
-    res.send({
-      clientSecret: paymentIntent.client_secret
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      courseId: courseId,
+      courseTitle: course.title
     });
   } catch (err) {
+    console.error('Error creating Razorpay order:', err);
     next(err);
   }
 });
 
-// Webhook to handle payment confirmation
-router.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  let event;
-
+// Verify payment and create enrollment
+router.post('/verify-payment', requireAuth, async (req, res) => {
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, courseId } = req.body;
 
-  // Handle the event
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object;
-    
-    // Create enrollment after successful payment
-    try {
-      const { userId, courseId } = paymentIntent.metadata;
-      
+    // Create the signature verification string
+    const body = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
+
+    // Verify the signature
+    if (expectedSignature === razorpay_signature) {
+      // Signature matched, payment verified
       // Check if enrollment already exists
       const existingEnrollment = await Enrollment.findOne({ 
-        userId, 
-        courseId 
+        userId: req.user._id, 
+        courseId: courseId 
       });
       
       if (!existingEnrollment) {
         await Enrollment.create({
-          userId,
-          courseId,
+          userId: req.user._id,
+          courseId: courseId,
           progress: new Map()
         });
       }
-    } catch (error) {
-      console.error('Error creating enrollment after payment:', error);
-    }
-  }
 
-  res.json({ received: true });
+      res.json({ success: true, message: 'Payment verified and enrollment created successfully!' });
+    } else {
+      res.status(400).json({ success: false, message: 'Payment verification failed' });
+    }
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    res.status(500).json({ success: false, message: 'Error verifying payment' });
+  }
 });
 
 module.exports = router;

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Reviews from '../components/Reviews';
+import RazorpayPaymentForm from '../components/PaymentForm';
 
 function CourseDetail() {
   const { id } = useParams();
@@ -11,6 +12,7 @@ function CourseDetail() {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolled, setEnrolled] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,7 +139,7 @@ function CourseDetail() {
               ) : course && course.price > 0 ? (
                 <div>
                   {showPayment ? (
-                    <PaymentForm
+                    <RazorpayPaymentForm
                       courseId={id}
                       coursePrice={course.price}
                       onPaymentSuccess={() => {
