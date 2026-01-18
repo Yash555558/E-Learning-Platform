@@ -16,6 +16,8 @@ const AdminPanel = () => {
     difficulty: 'Beginner',
     thumbnailUrl: ''
   });
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [lessons, setLessons] = useState([{ title: '', contentHtml: '', videoUrl: '', order: 0 }]);
   const [loading, setLoading] = useState(true);
   const [editCourseId, setEditCourseId] = useState(null);
@@ -56,6 +58,57 @@ const AdminPanel = () => {
     }));
   };
 
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setThumbnailFile(file);
+      // Preview the selected file
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          thumbnailUrl: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file) => {
+    if (!file) return null;
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    try {
+      setUploading(true);
+      const response = await fetch('/api/uploads/image', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Upload failed');
+      }
+      
+      const data = await response.json();
+      setUploading(false);
+      
+      if (data.url) {
+        return data.url;
+      } else {
+        throw new Error('Upload failed: No URL returned');
+      }
+    } catch (error) {
+      setUploading(false);
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image: ' + error.message);
+      return null;
+    }
+  };
+
   const handleLessonChange = (index, field, value) => {
     const newLessons = [...lessons];
     newLessons[index][field] = value;
@@ -81,8 +134,18 @@ const AdminPanel = () => {
     e.preventDefault();
     
     try {
+      // Upload thumbnail if a new file is selected
+      let uploadedThumbnailUrl = formData.thumbnailUrl;
+      if (thumbnailFile) {
+        uploadedThumbnailUrl = await uploadImage(thumbnailFile);
+        if (!uploadedThumbnailUrl) {
+          return; // uploadImage already showed error
+        }
+      }
+      
       const courseData = {
         ...formData,
+        thumbnailUrl: uploadedThumbnailUrl, // Use the uploaded URL
         lessons
       };
 
@@ -128,6 +191,7 @@ const AdminPanel = () => {
           difficulty: 'Beginner',
           thumbnailUrl: ''
         });
+        setThumbnailFile(null);
         setLessons([{ title: '', contentHtml: '', videoUrl: '', order: 0 }]);
         setEditCourseId(null);
         
@@ -336,14 +400,26 @@ const AdminPanel = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium mb-1">Thumbnail URL</label>
+                    <label className="block text-sm font-medium mb-1">Thumbnail Image</label>
                     <input
-                      type="text"
-                      name="thumbnailUrl"
-                      value={formData.thumbnailUrl}
-                      onChange={handleInputChange}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleThumbnailChange}
                       className="w-full p-2 border rounded-md"
                     />
+                    {uploading && (
+                      <div className="mt-2 text-blue-600">Uploading...</div>
+                    )}
+                    {formData.thumbnailUrl && !uploading && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600 mb-1">Preview:</p>
+                        <img 
+                          src={formData.thumbnailUrl} 
+                          alt="Thumbnail Preview" 
+                          className="w-32 h-24 object-cover rounded-md border"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 

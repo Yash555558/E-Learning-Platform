@@ -9,6 +9,7 @@ const courseRoutes = require('./routes/courses');
 const enrollRoutes = require('./routes/enrollments');
 const adminRoutes = require('./routes/admin');
 const reviewRoutes = require('./routes/reviews');
+const uploadRoutes = require('./routes/uploads');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -31,6 +32,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
