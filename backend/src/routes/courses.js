@@ -6,13 +6,26 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 // GET /api/courses
 router.get('/', async (req, res, next) => {
   try {
-    const { category, difficulty, search } = req.query;
+    const { category, difficulty, search, page = 1, limit = 10 } = req.query;
     const q = {};
     if (category) q.category = category;
     if (difficulty) q.difficulty = difficulty;
     if (search) q.title = { $regex: search, $options: 'i' };
-    const courses = await Course.find(q).sort('-createdAt');
-    res.json({ courses });
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const total = await Course.countDocuments(q);
+    const courses = await Course.find(q).sort('-createdAt').skip(skip).limit(parseInt(limit));
+    
+    res.json({ 
+      courses,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / parseInt(limit)),
+        totalItems: total,
+        hasNext: skip + courses.length < total,
+        hasPrev: parseInt(page) > 1
+      }
+    });
   } catch (err) { next(err); }
 });
 

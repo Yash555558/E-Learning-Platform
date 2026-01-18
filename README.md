@@ -147,3 +147,114 @@ Both backend and frontend applications require certain environment variables to 
 4. Set build command to `npm run build`
 5. Set output directory to `dist`
 6. Deploy!
+
+## Testing
+
+### Frontend Tests
+
+```bash
+# Run frontend tests
+npm test
+```
+
+### Backend Tests
+
+```bash
+# Run backend tests
+npm test
+```
+
+## Data Models
+
+### User
+```javascript
+{
+  _id,
+  name,
+  email,
+  passwordHash,
+  role: 'user' | 'admin',
+  createdAt
+}
+```
+
+### Course
+```javascript
+{
+  _id,
+  title,
+  slug,
+  description,
+  price,
+  category,
+  difficulty,
+  thumbnailUrl,
+  lessons: [
+    { title, contentHtml, videoUrl?, order }
+  ],
+  createdAt
+}
+```
+
+### Enrollment
+```javascript
+{
+  _id,
+  userId,
+  courseId,
+  progress: { lessonId: Boolean },
+  enrolledAt
+}
+```
+
+### Review
+```javascript
+{
+  _id,
+  userId,
+  courseId,
+  rating: Number (1-5),
+  comment: String,
+  createdAt
+}
+```
+
+## Additional Features
+
+- **Course Reviews**: Users can submit reviews and ratings for courses
+- **Pagination**: Course listing includes pagination for better UX
+- **Lesson Player**: Interactive video/content player with progress tracking
+- **Admin Panel**: Comprehensive admin interface with course/user management
+- **Progress Tracking**: Track completion status of individual lessons
+- **Responsive Design**: Works seamlessly across devices
+- **Secure Authentication**: JWT tokens in httpOnly cookies
+
+## Security Considerations
+
+- Passwords are securely hashed with bcrypt
+- JWT tokens are stored in httpOnly cookies to prevent XSS attacks
+- Input validation is implemented on both client and server sides
+- CORS is configured to allow only trusted origins
+- Role-based access control prevents unauthorized access
+
+## Development Notes
+
+- The application follows REST API conventions
+- The frontend uses React Context for state management
+- Tailwind CSS is used for styling
+- Admin routes are protected with role-based access control
+- The application supports course reviews and ratings
+- Progress tracking is implemented for course completion
+
+## Future Enhancements
+
+- Payment integration for paid courses
+- Video streaming capabilities
+- Advanced analytics dashboard
+- Course recommendation system
+- Push notifications
+- Multi-language support
+- Certificate generation
+- Instructor dashboard
+- Quiz functionality
+- Social sharing features

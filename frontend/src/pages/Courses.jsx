@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import Pagination from '../components/Pagination';
 
 function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    hasNext: false,
+    hasPrev: false
+  });
   const [filters, setFilters] = useState({
     category: '',
     difficulty: '',
@@ -18,9 +26,18 @@ function Courses() {
         if (filters.category) params.append('category', filters.category);
         if (filters.difficulty) params.append('difficulty', filters.difficulty);
         if (filters.search) params.append('search', filters.search);
+        params.append('page', pagination.currentPage);
+        params.append('limit', 9); // 9 courses per page to fit 3x3 grid
 
         const response = await axios.get(`/api/courses?${params}`);
         setCourses(response.data.courses);
+        setPagination(response.data.pagination || {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: response.data.courses.length,
+          hasNext: false,
+          hasPrev: false
+        });
       } catch (error) {
         console.error('Error fetching courses:', error);
       } finally {
@@ -29,7 +46,7 @@ function Courses() {
     };
 
     fetchCourses();
-  }, [filters]);
+  }, [filters, pagination.currentPage]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -138,6 +155,14 @@ function Courses() {
             </div>
           ))}
         </div>
+      )}
+      
+      {pagination.totalPages > 1 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={(page) => setPagination(prev => ({ ...prev, currentPage: page }))}
+        />
       )}
     </div>
   );

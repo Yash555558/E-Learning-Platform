@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import Reviews from '../components/Reviews';
 
 function CourseDetail() {
   const { id } = useParams();
@@ -98,6 +99,8 @@ function CourseDetail() {
               ))}
             </div>
           </div>
+          
+          <Reviews courseId={course._id} />
           
           <div>
             {user ? (
