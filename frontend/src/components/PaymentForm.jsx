@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = (() => {
+  if (typeof window !== 'undefined' && process.env.VITE_STRIPE_PUBLISHABLE_KEY && process.env.VITE_STRIPE_PUBLISHABLE_KEY.trim() !== '') {
+    return loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY);
+  }
+  return null;
+})();
 
 // Stripe Payment Form Component
 const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
@@ -151,9 +156,11 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
 // Main PaymentForm component that can use either Stripe or simulated payment
 const PaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel, useSimulated = false }) => {
   // Use simulated payment if explicitly requested or if Stripe keys aren't configured
+  const stripeKey = process.env.VITE_STRIPE_PUBLISHABLE_KEY;
   const useSimulatedPayment = useSimulated || 
-    !process.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-    process.env.VITE_STRIPE_PUBLISHABLE_KEY.trim() === '';
+    !stripeKey || 
+    (typeof stripeKey === 'string' && stripeKey.trim() === '') ||
+    !stripePromise;
   
   if (useSimulatedPayment) {
     // Fallback to simulated payment if Stripe key is not configured
