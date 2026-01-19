@@ -3,7 +3,13 @@ const router = express.Router();
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const { requireAuth } = require('../middleware/auth');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+let stripe;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+} else {
+  console.warn('Stripe secret key not configured. Payment processing will be disabled.');
+  stripe = null;
+}
 
 // Create a simulated payment order for a course
 router.post('/create-order', requireAuth, async (req, res, next) => {
@@ -39,6 +45,14 @@ router.post('/create-order', requireAuth, async (req, res, next) => {
 // Create a real payment intent for Stripe
 router.post('/create-payment-intent', requireAuth, async (req, res) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      return res.status(500).json({
+        success: false,
+        message: 'Payment processing is not configured. Please contact the administrator.'
+      });
+    }
+
     const { courseId, amount, currency } = req.body;
 
     // Fetch course details

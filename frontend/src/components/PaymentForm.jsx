@@ -150,7 +150,12 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
 
 // Main PaymentForm component that can use either Stripe or simulated payment
 const PaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel, useSimulated = false }) => {
-  if (useSimulated || !process.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+  // Use simulated payment if explicitly requested or if Stripe keys aren't configured
+  const useSimulatedPayment = useSimulated || 
+    !process.env.VITE_STRIPE_PUBLISHABLE_KEY || 
+    process.env.VITE_STRIPE_PUBLISHABLE_KEY.trim() === '';
+  
+  if (useSimulatedPayment) {
     // Fallback to simulated payment if Stripe key is not configured
     return <SimulatedPaymentForm courseId={courseId} coursePrice={coursePrice} onPaymentSuccess={onPaymentSuccess} onCancel={onCancel} />;
   }
