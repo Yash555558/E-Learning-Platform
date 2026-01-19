@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { validateEmail, validatePassword, validateName } from '../utils/Validation';
+import { validateEmail, validatePassword, validateName } from '../utils/Validation.jsx';
 
 function Signup() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
