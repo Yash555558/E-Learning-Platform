@@ -30,6 +30,7 @@ app.use(
     origin: [
       'http://localhost:5173',
       'https://e-learning-platform-p6w87tcbp-yash-kumars-projects-27a72d6d.vercel.app',
+      'https://e-learning-platform-ten-rosy.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean), // filter out any null/undefined values
     credentials: true
