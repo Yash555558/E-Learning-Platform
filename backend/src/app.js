@@ -15,7 +15,11 @@ const paymentRoutes = require('./routes/payments');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-connectDB();
+// Connect to database
+connectDB().catch(err => {
+  console.error('Database connection error:', err);
+  // Continue running the app but with degraded functionality
+});
 
 app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));

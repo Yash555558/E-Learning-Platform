@@ -22,13 +22,13 @@ function Footer() {
           
           <div>
             <h4 className="text-md font-semibold mb-4">Contact Us</h4>
-            <p className="text-gray-300">Email: info@elearning.com</p>
-            <p className="text-gray-300">Phone: (123) 456-7890</p>
+            <p className="text-gray-300">Email: yash777881@gmail.com</p>
+            <p className="text-gray-300">Phone: +91 9548262709</p>
           </div>
         </div>
         
         <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-          <p>&copy; 2023 E-Learning Platform. All rights reserved.</p>
+          <p>&copy; 2026 E-Learning Platform. All rights reserved.</p>
         </div>
       </div>
     </footer>

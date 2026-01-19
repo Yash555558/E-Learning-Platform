@@ -15,11 +15,23 @@ if (process.env.CLOUDINARY_URL) {
 module.exports = async function connectDB() {
   const uri = process.env.MONGO_URI;
   if (!uri) throw new Error('MONGO_URI not set');
+  
+  const options = {
+    dbName: 'elearning',
+    serverSelectionTimeoutMS: 3000,
+    socketTimeoutMS: 30000,
+    family: 4,
+    maxPoolSize: 5,
+    minPoolSize: 1
+  };
+  
   try {
-    await mongoose.connect(uri, { dbName: 'elearning' });
-    console.log('MongoDB connected');
+    await mongoose.connect(uri, options);
+    console.log('MongoDB connected successfully');
+    return true;
   } catch (err) {
-    console.error('Mongo connection error', err);
-    process.exit(1);
+    console.error('MongoDB connection failed:', err.message);
+    console.log('Starting server without database connection...');
+    return false;
   }
 };
