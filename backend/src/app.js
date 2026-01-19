@@ -27,7 +27,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      'https://e-learning-platform-p6w87tcbp-yash-kumars-projects-27a72d6d.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean), // filter out any null/undefined values
     credentials: true
   })
 );
