@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import api from '../utils/api';
 
 // Stripe Payment Form Component
 const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
@@ -22,24 +23,13 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
 
     try {
       // Create payment intent on the backend
-      const response = await fetch('/api/payments/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          courseId,
-          amount: coursePrice * 100, // Convert to cents/paise
-          currency: 'inr'
-        }),
+      const response = await api.post('/api/payments/create-payment-intent', {
+        courseId,
+        amount: coursePrice * 100, // Convert to cents/paise
+        currency: 'inr'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create payment intent');
-      }
-
-      const { clientSecret } = await response.json();
+      const { clientSecret } = response.data;
 
       // Confirm the payment
       const result = await stripe.confirmCardPayment(clientSecret, {
@@ -58,19 +48,7 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
         // The payment has been processed
         if (result.paymentIntent.status === 'succeeded') {
           // Complete enrollment on backend
-          const enrollResponse = await fetch('/api/enrollments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ courseId })
-          });
-          
-          if (!enrollResponse.ok) {
-            const errorData = await enrollResponse.json();
-            throw new Error(errorData.message || 'Failed to create enrollment');
-          }
+          const enrollResponse = await api.post('/api/enrollments', { courseId });
           
           onPaymentSuccess();
         }
