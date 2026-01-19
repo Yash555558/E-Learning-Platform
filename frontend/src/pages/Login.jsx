@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { validateEmail } from '../utils/Validation';
 
 function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -15,6 +16,18 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validate email
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Validate password
+    if (!formData.password || formData.password.length < 1) {
+      setError('Password is required');
+      return;
+    }
 
     const result = await login(formData.email, formData.password);
     if (result.success) {

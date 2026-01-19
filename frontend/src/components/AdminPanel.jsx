@@ -6,6 +6,7 @@ const AdminPanel = () => {
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState({});
+  const [analytics, setAnalytics] = useState({});
   const [activeTab, setActiveTab] = useState('dashboard');
   const [formData, setFormData] = useState({
     title: '',
@@ -30,19 +31,22 @@ const AdminPanel = () => {
 
   const fetchData = async () => {
     try {
-      const [coursesRes, usersRes, reportsRes] = await Promise.all([
+      const [coursesRes, usersRes, reportsRes, analyticsRes] = await Promise.all([
         fetch('/api/courses'),
         fetch('/api/admin/users', { credentials: 'include' }),
-        fetch('/api/admin/reports', { credentials: 'include' })
+        fetch('/api/admin/reports', { credentials: 'include' }),
+        fetch('/api/admin/analytics', { credentials: 'include' })
       ]);
 
       const coursesData = await coursesRes.json();
       const usersData = await usersRes.json();
       const reportsData = await reportsRes.json();
+      const analyticsData = await analyticsRes.json();
 
       setCourses(coursesData.courses || []);
       setUsers(usersData.users || []);
       setReports(reportsData.reports || {});
+      setAnalytics(analyticsData.analytics || {});
     } catch (error) {
       console.error('Error fetching admin data:', error);
     } finally {
@@ -340,18 +344,94 @@ const AdminPanel = () => {
       </div>
 
       {activeTab === 'dashboard' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold text-gray-600">Total Users</h3>
-            <p className="text-3xl font-bold text-blue-600">{reports.totalUsers || 0}</p>
+        <div>
+          {/* Basic Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-600">Total Users</h3>
+              <p className="text-3xl font-bold text-blue-600">{reports.totalUsers || 0}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-600">Total Courses</h3>
+              <p className="text-3xl font-bold text-green-600">{reports.totalCourses || 0}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-600">Total Enrollments</h3>
+              <p className="text-3xl font-bold text-purple-600">{reports.totalEnrollments || 0}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-600">Revenue</h3>
+              <p className="text-3xl font-bold text-orange-600">₹{analytics.totalRevenue || 0}</p>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold text-gray-600">Total Courses</h3>
-            <p className="text-3xl font-bold text-green-600">{reports.totalCourses || 0}</p>
+          
+          {/* Charts and Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-4">User Growth (Last 30 Days)</h3>
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                {analytics.userGrowthData ? (
+                  <div className="text-center">
+                    <p className="text-2xl">📈</p>
+                    <p>User growth chart</p>
+                  </div>
+                ) : (
+                  <p>No data available</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-4">Top Courses</h3>
+              <div className="h-64">
+                {analytics.topCourses && analytics.topCourses.length > 0 ? (
+                  <ul className="space-y-3">
+                    {analytics.topCourses.slice(0, 5).map((course, index) => (
+                      <li key={course._id} className="flex justify-between items-center border-b pb-2">
+                        <span>{index + 1}. {course.title}</span>
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                          {course.enrollmentCount} enrollments
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    <p>No top courses data</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold text-gray-600">Total Enrollments</h3>
-            <p className="text-3xl font-bold text-purple-600">{reports.totalEnrollments || 0}</p>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-4">Course Categories Distribution</h3>
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                {analytics.categoryDistribution ? (
+                  <div className="text-center">
+                    <p className="text-2xl">📊</p>
+                    <p>Category distribution chart</p>
+                  </div>
+                ) : (
+                  <p>No data available</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-4">Monthly Revenue</h3>
+              <div className="h-64 flex items-center justify-center text-gray-500">
+                {analytics.monthlyRevenue ? (
+                  <div className="text-center">
+                    <p className="text-2xl">💰</p>
+                    <p>Revenue trend chart</p>
+                  </div>
+                ) : (
+                  <p>No data available</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { validateEmail, validatePassword, validateName } from '../utils/Validation';
 
 function Signup() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
@@ -15,6 +16,24 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validate name
+    if (!validateName(formData.name)) {
+      setError('Please enter a valid name (at least 2 characters)');
+      return;
+    }
+
+    // Validate email
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Validate password
+    if (!validatePassword(formData.password)) {
+      setError('Password must be at least 8 characters with uppercase, lowercase, and number');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');

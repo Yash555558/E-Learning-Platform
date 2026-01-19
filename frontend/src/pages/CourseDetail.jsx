@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import Reviews from '../components/Reviews';
-import SimulatedPaymentForm from '../components/PaymentForm';
+import PaymentForm from '../components/PaymentForm';
 
 function CourseDetail() {
   const { id } = useParams();
@@ -139,7 +139,7 @@ function CourseDetail() {
               ) : course && course.price > 0 ? (
                 <div>
                   {showPayment ? (
-                    <SimulatedPaymentForm
+                    <PaymentForm
                       courseId={id}
                       coursePrice={course.price}
                       onPaymentSuccess={() => {
@@ -154,7 +154,7 @@ function CourseDetail() {
                       onClick={() => setShowPayment(true)}
                       className="bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 transition"
                     >
-                      Pay ₹{course.price} (Simulated)
+                      Pay ₹{course.price}
                     </button>
                   )}
                 </div>

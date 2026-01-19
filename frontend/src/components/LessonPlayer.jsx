@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const LessonPlayer = ({ course, initialLessonIndex = 0 }) => {
+const LessonPlayer = ({ course, enrollment, initialLessonIndex = 0 }) => {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(initialLessonIndex);
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const navigate = useNavigate();
 
   const currentLesson = course.lessons[currentLessonIndex];
+
+  // Initialize completed lessons based on enrollment progress
+  useEffect(() => {
+    if (enrollment && enrollment.progress) {
+      const completedSet = new Set();
+      Object.keys(enrollment.progress).forEach(lessonId => {
+        if (enrollment.progress[lessonId]) {
+          // Find the index of this lesson in the course
+          const lessonIndex = course.lessons.findIndex(lesson => lesson._id === lessonId);
+          if (lessonIndex !== -1) {
+            completedSet.add(lessonIndex);
+          }
+        }
+      });
+      setCompletedLessons(completedSet);
+    }
+  }, [enrollment, course.lessons]);
 
   const handleMarkComplete = async () => {
     const updatedCompleted = new Set(completedLessons);
@@ -15,11 +32,34 @@ const LessonPlayer = ({ course, initialLessonIndex = 0 }) => {
 
     // Update progress on backend
     try {
-      // Assuming enrollment ID is available from context or props
-      // This would need to be updated with actual enrollment ID
-      // await updateProgress(enrollmentId, course.lessons[currentLessonIndex]._id, true);
+      if (enrollment && enrollment._id) {
+        const lessonId = course.lessons[currentLessonIndex]._id;
+        const response = await fetch(`/api/enrollments/${enrollment._id}/progress`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            lessonId,
+            done: true
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to update progress');
+        }
+
+        // Update enrollment state in parent component if needed
+        console.log('Progress updated successfully');
+      }
     } catch (error) {
       console.error('Error updating progress:', error);
+      // Rollback UI if API call fails
+      updatedCompleted.delete(currentLessonIndex);
+      setCompletedLessons(updatedCompleted);
+      alert('Error updating progress: ' + error.message);
     }
   };
 

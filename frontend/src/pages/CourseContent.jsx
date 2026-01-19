@@ -117,7 +117,7 @@ function CourseContent() {
       <div className="mt-8">
         <h2 className="text-2xl font-bold mb-6">Course Content</h2>
         {course.lessons && course.lessons.length > 0 ? (
-          <LessonPlayer course={course} />
+          <LessonPlayer course={course} enrollment={enrollment} />
         ) : (
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <p className="text-gray-600">No lessons available for this course yet.</p>
