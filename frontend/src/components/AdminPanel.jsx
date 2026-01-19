@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/api';
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -32,21 +33,16 @@ const AdminPanel = () => {
   const fetchData = async () => {
     try {
       const [coursesRes, usersRes, reportsRes, analyticsRes] = await Promise.all([
-        fetch('/api/courses'),
-        fetch('/api/admin/users', { credentials: 'include' }),
-        fetch('/api/admin/reports', { credentials: 'include' }),
-        fetch('/api/admin/analytics', { credentials: 'include' })
+        api.get('/api/courses'),
+        api.get('/api/admin/users'),
+        api.get('/api/admin/reports'),
+        api.get('/api/admin/analytics')
       ]);
 
-      const coursesData = await coursesRes.json();
-      const usersData = await usersRes.json();
-      const reportsData = await reportsRes.json();
-      const analyticsData = await analyticsRes.json();
-
-      setCourses(coursesData.courses || []);
-      setUsers(usersData.users || []);
-      setReports(reportsData.reports || {});
-      setAnalytics(analyticsData.analytics || {});
+      setCourses(coursesRes.data.courses || []);
+      setUsers(usersRes.data.users || []);
+      setReports(reportsRes.data.reports || {});
+      setAnalytics(analyticsRes.data.analytics || {});
     } catch (error) {
       console.error('Error fetching admin data:', error);
     } finally {
@@ -86,22 +82,11 @@ const AdminPanel = () => {
     
     try {
       setUploading(true);
-      const response = await fetch('/api/uploads/image', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
-      }
-      
-      const data = await response.json();
+      const response = await api.post('/api/uploads/image', formData);
       setUploading(false);
       
-      if (data.url) {
-        return data.url;
+      if (response.data.url) {
+        return response.data.url;
       } else {
         throw new Error('Upload failed: No URL returned');
       }
@@ -197,27 +182,13 @@ const AdminPanel = () => {
 
       let response;
       if (editCourseId) {
-        response = await fetch(`/api/courses/${editCourseId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(courseData)
-        });
+        response = await api.put(`/api/courses/${editCourseId}`, courseData);
       } else {
-        response = await fetch('/api/courses', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(courseData)
-        });
+        response = await api.post('/api/courses', courseData);
       }
 
-      if (response.ok) {
-        const result = await response.json();
+      if (response.status === 200 || response.status === 201) {
+        const result = response.data;
         
         if (editCourseId) {
           setCourses(courses.map(course => 
@@ -271,17 +242,13 @@ const AdminPanel = () => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
 
     try {
-      const response = await fetch(`/api/courses/${courseId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await api.delete(`/api/courses/${courseId}`);
 
-      if (response.ok) {
+      if (response.status === 200) {
         setCourses(courses.filter(course => course._id !== courseId));
         alert('Course deleted successfully!');
       } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to delete course');
+        alert(response.data.message || 'Failed to delete course');
       }
     } catch (error) {
       console.error('Error deleting course:', error);

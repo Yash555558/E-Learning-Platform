@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import api from '../utils/api';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -10,7 +10,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
-        const response = await axios.get('/api/enrollments/me');
+        const response = await api.get('/api/enrollments/me');
         setEnrollments(response.data.enrollments);
       } catch (error) {
         console.error('Error fetching enrollments:', error);

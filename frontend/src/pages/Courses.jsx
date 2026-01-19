@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import Pagination from '../components/Pagination';
 
 function Courses() {
@@ -29,7 +29,7 @@ function Courses() {
         params.append('page', pagination.currentPage);
         params.append('limit', 9); // 9 courses per page to fit 3x3 grid
 
-        const response = await axios.get(`/api/courses?${params}`);
+        const response = await api.get(`/api/courses?${params}`);
         setCourses(response.data.courses);
         setPagination(response.data.pagination || {
           currentPage: 1,

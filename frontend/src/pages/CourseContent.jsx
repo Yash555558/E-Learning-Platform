@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import LessonPlayer from '../components/LessonPlayer';
 
@@ -15,24 +16,17 @@ function CourseContent() {
     const fetchData = async () => {
       try {
         // Fetch course details
-        const courseResponse = await fetch(`/api/courses/${courseId}`);
+        const courseResponse = await api.get(`/api/courses/${courseId}`);
         if (!courseResponse.ok) {
           throw new Error('Failed to fetch course');
         }
-        const courseData = await courseResponse.json();
-        setCourse(courseData.course);
+        setCourse(courseResponse.data.course);
 
         // Fetch user's enrollment for this course
-        const enrollmentResponse = await fetch('/api/enrollments/me', {
-          credentials: 'include'
-        });
-        if (!enrollmentResponse.ok) {
-          throw new Error('Failed to fetch enrollments');
-        }
-        const enrollmentData = await enrollmentResponse.json();
+        const enrollmentResponse = await api.get('/api/enrollments/me');
         
         // Find the specific enrollment for this course
-        const userEnrollment = enrollmentData.enrollments.find(
+        const userEnrollment = enrollmentResponse.data.enrollments.find(
           enrollment => enrollment.courseId._id === courseId
         );
         

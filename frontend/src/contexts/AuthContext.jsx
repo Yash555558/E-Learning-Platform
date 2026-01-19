@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get('/api/auth/me');
+        const response = await api.get('/api/auth/me');
         setUser(response.data.user);
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -28,27 +28,27 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       setUser(response.data.user);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response.data.message };
+      return { success: false, error: error.response?.data?.message || error.message };
     }
   };
 
   const signup = async (name, email, password) => {
     try {
-      const response = await axios.post('/api/auth/signup', { name, email, password });
+      const response = await api.post('/api/auth/signup', { name, email, password });
       setUser(response.data.user);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response.data.message };
+      return { success: false, error: error.response?.data?.message || error.message };
     }
   };
 
   const logout = async () => {
     try {
-      await axios.post('/api/auth/logout');
+      await api.post('/api/auth/logout');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);

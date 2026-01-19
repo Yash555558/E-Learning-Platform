@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import Reviews from '../components/Reviews';
 import PaymentForm from '../components/PaymentForm';
@@ -18,14 +18,12 @@ function CourseDetail() {
     const fetchData = async () => {
       try {
         // Fetch course details
-        const courseResponse = await axios.get(`/api/courses/${id}`);
+        const courseResponse = await api.get(`/api/courses/${id}`);
         setCourse(courseResponse.data.course);
         
         // Check if user is enrolled in this course
         if (user) {
-          const enrollmentResponse = await axios.get('/api/enrollments/me', {
-            withCredentials: true
-          });
+          const enrollmentResponse = await api.get('/api/enrollments/me');
           const userEnrollments = enrollmentResponse.data.enrollments;
           const isEnrolled = userEnrollments.some(enrollment => 
             enrollment.courseId._id === id
@@ -44,7 +42,7 @@ function CourseDetail() {
 
   const handleEnroll = async () => {
     try {
-      await axios.post('/api/enrollments', { courseId: course._id });
+      await api.post('/api/enrollments', { courseId: course._id });
       setEnrolled(true);
       alert('Successfully enrolled in the course!');
     } catch (error) {
