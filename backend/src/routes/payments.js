@@ -61,15 +61,16 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Validate amount matches course price
-    if (amount !== course.price * 100) { // Convert to smallest currency unit
-      return res.status(400).json({ message: 'Amount mismatch with course price' });
+    // Validate amount matches course price (allow small variations due to conversion)
+    const expectedAmount = course.price * 100;
+    if (Math.abs(amount - expectedAmount) > 1) { // Allow 1 paise difference
+      return res.status(400).json({ message: `Amount mismatch. Expected: ${expectedAmount}, Received: ${amount}` });
     }
 
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
-      currency: currency || 'usd',
+      currency: currency || 'inr',
       metadata: {
         userId: req.user._id.toString(),
         courseId: courseId,
@@ -83,7 +84,23 @@ router.post('/create-payment-intent', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating payment intent:', error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Stripe error details:', error.type, error.raw);
+    
+    // More detailed error responses
+    let errorMessage = 'Payment processing failed';
+    if (error.type === 'StripeCardError') {
+      errorMessage = error.message;
+    } else if (error.type === 'StripeInvalidRequestError') {
+      errorMessage = 'Invalid payment request';
+    } else if (error.type === 'StripeAPIError') {
+      errorMessage = 'Payment service temporarily unavailable';
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: errorMessage,
+      errorType: error.type 
+    });
   }
 });
 
