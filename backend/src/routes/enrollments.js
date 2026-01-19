@@ -7,10 +7,28 @@ const { requireAuth } = require('../middleware/auth');
 // POST /api/enrollments
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, paymentId, amountPaid = 0 } = req.body;
+    
+    // Check if user is already enrolled
     const existing = await Enrollment.findOne({ userId: req.user._id, courseId });
     if (existing) return res.status(400).json({ message: 'Already enrolled' });
-    const enroll = await Enrollment.create({ userId: req.user._id, courseId });
+    
+    // Get course to check if it's free or paid
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: 'Course not found' });
+    
+    // For free courses, set payment as completed with 0 amount
+    // For paid courses, payment info should come from payment system
+    const enrollmentData = {
+      userId: req.user._id,
+      courseId: courseId,
+      paymentStatus: course.price > 0 ? 'pending' : 'completed',
+      paymentId: paymentId || null,
+      paymentDate: course.price > 0 ? null : new Date(),
+      amountPaid: amountPaid
+    };
+    
+    const enroll = await Enrollment.create(enrollmentData);
     res.status(201).json({ enrollment: enroll });
   } catch (err) { next(err); }
 });

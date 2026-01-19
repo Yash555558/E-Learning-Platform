@@ -148,6 +148,7 @@ function CourseDetail() {
                         alert('Payment successful! You are now enrolled in the course.');
                       }}
                       onCancel={() => setShowPayment(false)}
+                      stripePublicKey="pk_test_51Sr2H9FbtduJbSijejlTTjwxvkQO9BhiCysPTJbFvsk0OHlpIEzVhHBgvXutzjg9Sq4k9bJ84cg4JCz5d3UJKfax00RwacDc6x"
                     />
                   ) : (
                     <button

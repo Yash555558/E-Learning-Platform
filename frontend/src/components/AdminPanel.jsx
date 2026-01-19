@@ -369,14 +369,25 @@ const AdminPanel = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-lg font-semibold mb-4">User Growth (Last 30 Days)</h3>
-              <div className="h-64 flex items-center justify-center text-gray-500">
-                {analytics.userGrowthData ? (
-                  <div className="text-center">
-                    <p className="text-2xl">📈</p>
-                    <p>User growth chart</p>
+              <div className="h-64">
+                {analytics.userGrowthData && analytics.userGrowthData.length > 0 ? (
+                  <div className="p-4">
+                    <h4 className="font-semibold mb-2 text-center">Daily Registrations</h4>
+                    <div className="space-y-2 max-h-56 overflow-y-auto">
+                      {analytics.userGrowthData.map((data, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                          <span className="text-sm">
+                            {data._id.year}-{String(data._id.month).padStart(2, '0')}-{String(data._id.day).padStart(2, '0')}
+                          </span>
+                          <span className="font-medium">{data.count} new users</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <p>No data available</p>
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    <p>No recent user registrations</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -407,28 +418,52 @@ const AdminPanel = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-lg font-semibold mb-4">Course Categories Distribution</h3>
-              <div className="h-64 flex items-center justify-center text-gray-500">
-                {analytics.categoryDistribution ? (
-                  <div className="text-center">
-                    <p className="text-2xl">📊</p>
-                    <p>Category distribution chart</p>
+              <div className="h-64">
+                {analytics.categoryDistribution && analytics.categoryDistribution.length > 0 ? (
+                  <div className="p-4">
+                    <h4 className="font-semibold mb-2 text-center">Course Categories</h4>
+                    <div className="space-y-2 max-h-56 overflow-y-auto">
+                      {analytics.categoryDistribution.map((category, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                          <span className="font-medium">{category._id}</span>
+                          <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded text-sm">
+                            {category.count} courses
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <p>No data available</p>
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    <p>No course categories found</p>
+                  </div>
                 )}
               </div>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-lg font-semibold mb-4">Monthly Revenue</h3>
-              <div className="h-64 flex items-center justify-center text-gray-500">
-                {analytics.monthlyRevenue ? (
-                  <div className="text-center">
-                    <p className="text-2xl">💰</p>
-                    <p>Revenue trend chart</p>
+              <div className="h-64">
+                {analytics.monthlyRevenue && analytics.monthlyRevenue.length > 0 ? (
+                  <div className="p-4">
+                    <h4 className="font-semibold mb-2 text-center">Monthly Revenue</h4>
+                    <div className="space-y-2 max-h-56 overflow-y-auto">
+                      {analytics.monthlyRevenue.map((month, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-green-50 rounded">
+                          <span className="font-medium">
+                            {month._id.year}-{String(month._id.month).padStart(2, '0')}
+                          </span>
+                          <span className="bg-green-200 text-green-800 px-2 py-1 rounded text-sm">
+                            ₹{month.total.toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <p>No data available</p>
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    <p>No revenue data available</p>
+                  </div>
                 )}
               </div>
             </div>

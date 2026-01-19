@@ -2,13 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-const stripePromise = (() => {
-  if (typeof window !== 'undefined' && process.env.VITE_STRIPE_PUBLISHABLE_KEY && process.env.VITE_STRIPE_PUBLISHABLE_KEY.trim() !== '') {
-    return loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY);
-  }
-  return null;
-})();
-
 // Stripe Payment Form Component
 const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => {
   const stripe = useStripe();
@@ -154,21 +147,59 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
 };
 
 // Main PaymentForm component that can use either Stripe or simulated payment
-const PaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel, useSimulated = false }) => {
-  // Use simulated payment if explicitly requested or if Stripe keys aren't configured
-  const stripeKey = process.env.VITE_STRIPE_PUBLISHABLE_KEY;
-  const useSimulatedPayment = useSimulated || 
-    !stripeKey || 
-    (typeof stripeKey === 'string' && stripeKey.trim() === '') ||
-    !stripePromise;
+const PaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel, useSimulated = false, stripePublicKey = null }) => {
+  const [stripeInstance, setStripeInstance] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const initializeStripe = async () => {
+      if (typeof window !== 'undefined') {
+        // Try to get key from props first, then from environment
+        let publishableKey = stripePublicKey || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+        
+        if (publishableKey && typeof publishableKey === 'string' && publishableKey.trim() !== '') {
+
+          try {
+            const stripe = await loadStripe(publishableKey.trim());
+
+            if (stripe) {
+              setStripeInstance(stripe);
+            }
+          } catch (error) {
+            console.error('Error initializing Stripe:', error);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    
+    initializeStripe();
+  }, [stripePublicKey]);
+  
+  // Wait for Stripe to be initialized before deciding
+  if (loading) {
+    return (
+      <div className="p-6 bg-white rounded-lg shadow-md max-w-md mx-auto text-center">
+        <div className="flex justify-center mb-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+        <p>Loading payment system...</p>
+      </div>
+    );
+  }
+  
+  // Temporary fix: if useSimulated is not explicitly true, try to use Stripe
+  // This will bypass the environment variable check when Stripe is initialized
+  const useSimulatedPayment = useSimulated || (!stripeInstance);
   
   if (useSimulatedPayment) {
-    // Fallback to simulated payment if Stripe key is not configured
+    // Fallback to simulated payment if explicitly requested or Stripe is not available
     return <SimulatedPaymentForm courseId={courseId} coursePrice={coursePrice} onPaymentSuccess={onPaymentSuccess} onCancel={onCancel} />;
   }
 
   return (
-    <Elements stripe={stripePromise}>
+    <Elements stripe={stripeInstance}>
       <CheckoutForm 
         courseId={courseId} 
         coursePrice={coursePrice} 
