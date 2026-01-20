@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
 const LessonPlayer = ({ course, enrollment, initialLessonIndex = 0 }) => {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(initialLessonIndex);
@@ -34,22 +35,10 @@ const LessonPlayer = ({ course, enrollment, initialLessonIndex = 0 }) => {
     try {
       if (enrollment && enrollment._id) {
         const lessonId = course.lessons[currentLessonIndex]._id;
-        const response = await fetch(`/api/enrollments/${enrollment._id}/progress`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            lessonId,
-            done: true
-          }),
+        await api.put(`/api/enrollments/${enrollment._id}/progress`, {
+          lessonId,
+          done: true
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to update progress');
-        }
 
         // Update enrollment state in parent component if needed
         console.log('Progress updated successfully');
