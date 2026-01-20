@@ -199,36 +199,16 @@ const SimulatedPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCance
 
     try {
       // Create order on the backend
-      const response = await fetch('/api/payments/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'credentials': 'include'
-        },
-        body: JSON.stringify({ courseId })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create order');
-      }
-
-      const orderData = await response.json();
+      const response = await api.post('/api/payments/create-order', { courseId });
+      const orderData = response.data;
 
       // Simulate payment processing
-      const paymentResponse = await fetch('/api/payments/simulate-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'credentials': 'include'
-        },
-        body: JSON.stringify({
-          orderId: orderData.orderId,
-          courseId: courseId
-        })
+      const paymentResponse = await api.post('/api/payments/simulate-payment', {
+        orderId: orderData.orderId,
+        courseId: courseId
       });
 
-      const paymentResult = await paymentResponse.json();
+      const paymentResult = paymentResponse.data;
 
       if (paymentResult.success) {
         onPaymentSuccess();

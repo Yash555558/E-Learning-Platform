@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/api';
 
 const Reviews = ({ courseId }) => {
   const [reviews, setReviews] = useState([]);
@@ -13,9 +14,8 @@ const Reviews = ({ courseId }) => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`/api/reviews/${courseId}`);
-        const data = await response.json();
-        setReviews(data.reviews || []);
+        const response = await api.get(`/api/reviews/${courseId}`);
+        setReviews(response.data.reviews || []);
       } catch (error) {
         console.error('Error fetching reviews:', error);
       } finally {
@@ -36,25 +36,11 @@ const Reviews = ({ courseId }) => {
     }
 
     try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ courseId, rating, comment }),
-      });
-
-      if (response.ok) {
-        const newReview = await response.json();
-        setReviews([newReview.review, ...reviews]);
-        setRating(5);
-        setComment('');
-        setShowForm(false);
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to submit review');
-      }
+      const response = await api.post('/api/reviews', { courseId, rating, comment });
+      setReviews([response.data.review, ...reviews]);
+      setRating(5);
+      setComment('');
+      setShowForm(false);
     } catch (error) {
       console.error('Error submitting review:', error);
       alert('Failed to submit review');
