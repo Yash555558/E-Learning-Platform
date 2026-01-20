@@ -23,7 +23,7 @@ router.post(
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
       res.cookie('token', token, { 
         httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production', 
+        secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production', 
         sameSite: 'none',
         domain: process.env.COOKIE_DOMAIN || undefined
       });
@@ -43,7 +43,7 @@ router.post('/login', body('email').isEmail(), body('password').exists(), async 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
     res.cookie('token', token, { 
       httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
+      secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production', 
       sameSite: 'none',
       domain: process.env.COOKIE_DOMAIN || undefined
     });
@@ -66,7 +66,7 @@ router.get('/me', async (req, res, next) => {
 router.post('/logout', (req, res) => {
   res.clearCookie('token', { 
     httpOnly: true, 
-    secure: process.env.NODE_ENV === 'production', 
+    secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production', 
     sameSite: 'none',
     domain: process.env.COOKIE_DOMAIN || undefined
   });
