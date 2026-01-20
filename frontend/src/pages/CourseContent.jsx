@@ -17,9 +17,6 @@ function CourseContent() {
       try {
         // Fetch course details
         const courseResponse = await api.get(`/api/courses/${courseId}`);
-        if (!courseResponse.ok) {
-          throw new Error('Failed to fetch course');
-        }
         setCourse(courseResponse.data.course);
 
         // Fetch user's enrollment for this course
@@ -40,7 +37,14 @@ function CourseContent() {
         setEnrollment(userEnrollment);
       } catch (error) {
         console.error('Error fetching course content:', error);
-        alert('Error loading course content');
+        if (error.response?.status === 404) {
+          alert('Course not found');
+        } else if (error.response?.status === 401) {
+          alert('You must be logged in to view course content');
+          navigate('/login');
+        } else {
+          alert('Error loading course content: ' + (error.response?.data?.message || error.message));
+        }
       } finally {
         setLoading(false);
       }
