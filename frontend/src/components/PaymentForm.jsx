@@ -48,7 +48,12 @@ const CheckoutForm = ({ courseId, coursePrice, onPaymentSuccess, onCancel }) => 
         // The payment has been processed
         if (result.paymentIntent.status === 'succeeded') {
           // Complete enrollment on backend
-          const enrollResponse = await api.post('/api/enrollments', { courseId });
+          const enrollResponse = await api.post('/api/enrollments', { 
+            courseId, 
+            paymentStatus: 'completed',
+            amountPaid: coursePrice,
+            paymentId: result.paymentIntent.id
+          });
           
           onPaymentSuccess();
         }
@@ -202,7 +207,8 @@ const SimulatedPaymentForm = ({ courseId, coursePrice, onPaymentSuccess, onCance
       const response = await api.post('/api/payments/create-order', { courseId });
       const orderData = response.data;
 
-      // Simulate payment processing
+      // After successful simulated payment, create enrollment
+      // The simulate-payment endpoint already creates the enrollment
       const paymentResponse = await api.post('/api/payments/simulate-payment', {
         orderId: orderData.orderId,
         courseId: courseId

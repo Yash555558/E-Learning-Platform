@@ -7,7 +7,7 @@ const { requireAuth } = require('../middleware/auth');
 // POST /api/enrollments
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    const { courseId, paymentId, amountPaid = 0 } = req.body;
+    const { courseId, paymentId, amountPaid = 0, paymentStatus = 'pending' } = req.body;
     
     // Check if user is already enrolled
     const existing = await Enrollment.findOne({ userId: req.user._id, courseId });
@@ -22,10 +22,10 @@ router.post('/', requireAuth, async (req, res, next) => {
     const enrollmentData = {
       userId: req.user._id,
       courseId: courseId,
-      paymentStatus: course.price > 0 ? 'pending' : 'completed',
+      paymentStatus: paymentStatus,
       paymentId: paymentId || null,
-      paymentDate: course.price > 0 ? null : new Date(),
-      amountPaid: amountPaid
+      paymentDate: paymentStatus === 'completed' ? new Date() : null,
+      amountPaid: amountPaid || (paymentStatus === 'completed' ? course.price : 0)
     };
     
     const enroll = await Enrollment.create(enrollmentData);
